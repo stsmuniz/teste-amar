@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use \App\Http\Requests\UserRequest;
+use \App\User;
 
 class UserController extends Controller
 {
-    public function __construct()
+    private $user;
+    public function __construct(User $user)
     {
-        //$this->middleware('auth');
+        // $this->middleware('auth');
+        $this->user = $user;
     }
 
     /**
@@ -16,15 +20,25 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-	$users = \App\User::get(['id','name','login', 'email']);
-	return response()->json([
-		'draw' => intval(request('draw')),
-		'recordsTotal' => intval(count($users)),
-		'recordsFiltered' => intval(count($users)),
-		'data' => $users
-	]);
+        $columns = ['id','name','login', 'email'];
+        $params = $request->all();
+        $users = $this->user
+        ->orderBy(
+            $columns[$params['order'][0]['column']],
+            $params['order'][0]['dir']
+            )
+        ->take($params['length'])
+        ->skip($params['length'] * $params['start'])
+        ->get();
+
+        return response()->json([
+          'draw' => intval(request('draw')),
+          'recordsTotal' => intval(count($users)),
+          'recordsFiltered' => intval(count($users)),
+          'data' => $users
+          ]);
     }
 
     /**
@@ -43,9 +57,18 @@ class UserController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(UserRequest $request)
     {
-        //
+        $return = ['message' => 'Usuário criado'];
+        $statusCode = 201;
+        try {
+            $this->user->create($request->all());
+        } catch (\Exception $e) {
+            $return = ['message' => $e->getMessage()];
+            $statusCode = 422;
+        }
+
+        return response()->json($return, $statusCode);
     }
 
     /**
@@ -56,7 +79,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        //
+        return response()->json($this->user->findOrFail($id));
     }
 
     /**
@@ -79,7 +102,17 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $return = ['message' => 'Usuário atualizado'];
+        $statusCode = 200;
+        try {
+            $user = $this->user->findOrFail($id);
+            $user->update($request->all());
+        } catch(\Exception $e) {
+            $return = ['message' => $e->getMessage()];
+            $statusCode = 422;
+        }
+
+        return response()->json($return, $statusCode);
     }
 
     /**
@@ -90,6 +123,17 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $return = ['message' => 'Usuário excluído'];
+        $statusCode = 200;
+
+        try {
+            $user = $this->user->findOrFail($id);
+            $user->delete($id);
+        } catch(\Exception $e) {
+            $return = ['message' => $e->getMessage()];
+            $statusCode = 422;
+        }
+
+        return response()->json($return, $statusCode);
     }
 }

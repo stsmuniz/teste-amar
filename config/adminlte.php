@@ -108,18 +108,11 @@ return [
     */
 
     'menu' => [
-        'USUÁRIOS',
         [
-            'text'        => 'Lista',
+            'text'        => 'Usuários',
             'url'         => 'admin/pages',
             'icon'        => 'users',
-        ],
-        'ACCOUNT SETTINGS',
-        [
-            'text' => 'Profile',
-            'url'  => 'admin/settings',
-            'icon' => 'user',
-        ],
+        ]
     ],
 
     /*
